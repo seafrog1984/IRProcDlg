@@ -21,4 +21,11 @@ protected:
 public:
 	afx_msg void OnBnClickedOpen();
 	virtual BOOL OnInitDialog();
+//	virtual BOOL PreTranslateMessage(MSG* pMsg);
+//	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+
+	unsigned short *ori;
+	afx_msg void OnBnClickedShow();
+	BOOL m_showTemper;
+	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 };
