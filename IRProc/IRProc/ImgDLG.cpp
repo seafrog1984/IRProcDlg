@@ -7,15 +7,14 @@
 #include "afxdialogex.h"
 #include <fstream>
 
-#include <opencv2/core/core.hpp>
-#include<opencv2/highgui/highgui.hpp>
-#include <opencv2/opencv.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
+
 using namespace std;
 using namespace cv;
 
 #define F_TO_C(x)  ((((x)-32.0) * 5.0) / 9.0)
 #define C_TO_F(x)    ((32.0) + ((x) * (9.0/5.0)))
+#define HEIGHT 240
+#define WIDTH 320
 
 Mat img;
 Mat dst;
@@ -61,10 +60,15 @@ END_MESSAGE_MAP()
 void CImgDLG::OnBnClickedOpen()
 {
 	// TODO:  在此添加控件通知处理程序代码
+	CFileDialog dlg(TRUE, _T("*.dat"), NULL, OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY, _T("data files (*.dat) |*.dat | All Files (*.*) |*.*||"), NULL);                            // 选项图片的约定     
+	dlg.m_ofn.lpstrTitle = _T("Open Image");// 打开文件对话框的标题名     
+	if (dlg.DoModal() != IDOK)             // 判断是否获得图片         
+		return;
+	CString m_path = dlg.GetPathName();
 
 	unsigned short *tmp = (unsigned short*)malloc(320 * 240 * sizeof(short));
 	ori = tmp;
-	ifstream fin("b.dat");
+	ifstream fin((LPSTR)(LPCSTR)m_path);
 
 	for (int i = 0; i < width*height; i++)
 	{
@@ -83,9 +87,9 @@ void CImgDLG::OnBnClickedOpen()
 	src.copyTo(img);
 	//	cvtColor(src,img , CV_BGR2GRAY);
 
-	Mat g_src(img);
-	dst.create(img.size(), CV_8UC3);
-	g_dst.create(img.size(), CV_8UC1);
+	Mat g_src(img),g_tmpdst,tmpdst;
+	tmpdst.create(img.size(), CV_8UC3);
+	g_tmpdst.create(img.size(), CV_8UC1);
 	//cvtColor(img, g_src, CV_BGR2GRAY);
 
 	if (tmp)
@@ -107,8 +111,6 @@ void CImgDLG::OnBnClickedOpen()
 		bool auto_range = true; // set to false to use manual range...
 
 		// Manual range values
-
-
 
 		int i, end, col, row;
 		float value;
@@ -146,58 +148,53 @@ void CImgDLG::OnBnClickedOpen()
 				row = i / width;
 				col = i%width;
 
-				g_dst.at<uchar>(row, col) = displayValue;
+				g_tmpdst.at<uchar>(row, col) = displayValue;
 
-				dst.at<Vec3b>(row, col)[0] = 101.2 - 116.2*cos(tmp*0.08655) + 91.93*sin(tmp*0.08592);
-				dst.at<Vec3b>(row, col)[1] = 150.9 - 110.9*cos(tmp*0.08457) - 97.33*sin(tmp*0.08457);
-				dst.at<Vec3b>(row, col)[2] = 125.3 + 59.93*cos(tmp*0.04896) - 130.2*sin(tmp*0.04896);
+				tmpdst.at<Vec3b>(row, col)[0] = 101.2 - 116.2*cos(tmp*0.08655) + 91.93*sin(tmp*0.08592);
+				tmpdst.at<Vec3b>(row, col)[1] = 150.9 - 110.9*cos(tmp*0.08457) - 97.33*sin(tmp*0.08457);
+				tmpdst.at<Vec3b>(row, col)[2] = 125.3 + 59.93*cos(tmp*0.04896) - 130.2*sin(tmp*0.04896);
 
 
-				/*if ((value - bottomvalue) / range <= 0.25)
-				{
-				dst.at<Vec3b>(row, col)[0] = 255;
-				dst.at<Vec3b>(row, col)[1] = displayValue;
-				dst.at<Vec3b>(row, col)[2] = 0;
-				}
-				else if ((value - bottomvalue) / range <= 0.5)
-				{
-				dst.at<Vec3b>(row, col)[0] = (range-(value-range/4)*2)/range*255;
-				dst.at<Vec3b>(row, col)[1] = 255;
-				dst.at<Vec3b>(row, col)[2] = 0;
-				}
-				else if ((value - bottomvalue) / range <= 0.75)
-				{
-				dst.at<Vec3b>(row, col)[0] = 0;
-				dst.at<Vec3b>(row, col)[1] = 255;
-				dst.at<Vec3b>(row, col)[2] = (value-range/2)*2/range*255;
-				}
-				else
-				{
-				dst.at<Vec3b>(row, col)[0] = (range - (value - range*3 / 4) * 2) / range * 255;
-				dst.at<Vec3b>(row, col)[1] = 0;
-				dst.at<Vec3b>(row, col)[2] = 255;
-				}
-				*/
+		
 			}
 		}
 	}
-	//int i, j;
-	//for (i = 0; i < dst.rows; i++)
-	//{
-	//	for (j = 0; j < dst.cols; j++)
-	//	{
-	//		int tmp = g_src.at<uchar>(i, j);
 
-	//		dst.at<Vec3b>(i, j)[0] = 101.2 - 116.2*cos(tmp*0.08655) + 91.93*sin(tmp*0.08592);
-	//		dst.at<Vec3b>(i, j)[1] = 150.9 - 110.9*cos(tmp*0.08457) - 97.33*sin(tmp*0.08457);
-	//		dst.at<Vec3b>(i, j)[2] = 125.3 + 59.93*cos(tmp*0.04896) - 130.2*sin(tmp*0.04896);
-	//	}
-	//}
+//	Mat g_dstImage2, g_dstImage3, g_dstImage4, tempImage,g_tempImage;
+		g_dst.create(Size(g_tmpdst.rows, g_tmpdst.cols), CV_8UC1);
+		for (int i = 0; i < g_tmpdst.rows; i++)
+		{
+			for (int j = 0; j < g_tmpdst.cols; j++)
+			{
+				g_dst.at<uchar>(j, HEIGHT - 1 - i) = g_tmpdst.at<uchar>(i, j);
+			}
 
+		}
 
+		dst.create(Size(tmpdst.rows, tmpdst.cols), CV_8UC3);
+		for (int i = 0; i < tmpdst.rows; i++)
+		{
+			for (int j = 0; j < tmpdst.cols; j++)
+			{
+				dst.at<Vec3b>(j, HEIGHT - 1 - i)[0] = tmpdst.at<Vec3b>(i, j)[0];
+				dst.at<Vec3b>(j, HEIGHT - 1 - i)[1] = tmpdst.at<Vec3b>(i, j)[1];
+				dst.at<Vec3b>(j, HEIGHT - 1 - i)[2] = tmpdst.at<Vec3b>(i, j)[2];
+			}
+
+		}
+
+//	rot90(g_tmpdst, g_dst);
+//	rot90RGB(tmpdst, dst);
+
+	/*pyrUp(tempImage, dst, Size(tempImage.cols * 2, tempImage.rows * 2));
+	pyrUp(g_tempImage, g_dst, Size(tempImage.cols * 2, tempImage.rows * 2));*/
+	//pyrDown(tempImage, g_dstImage4, Size(tempImage.cols / 2, tempImage.rows / 2));
+
+	
 	imshow("view", g_dst);
 
 	imshow("color", dst);
+
 
 	//新建一个名为expanded的Mat容器。高度和img1相同，宽度为两倍  
 	//Mat expanded(Size((dst.cols + dst.cols), dst.rows), CV_8UC3);
@@ -232,7 +229,7 @@ BOOL CImgDLG::OnInitDialog()
 	CRect rect;
 	GetDlgItem(IDC_PIC)->GetWindowRect(&rect);           //IDC_WAVE_DRAW为Picture Control的ID  
 	ScreenToClient(&rect);
-	GetDlgItem(IDC_PIC)->MoveWindow(30, 100, 320, 240, true);    //固定Picture Control控件的大小  
+	GetDlgItem(IDC_PIC)->MoveWindow(30, 100, 240, 320, true);    //固定Picture Control控件的大小  
 
 	namedWindow("color", WINDOW_AUTOSIZE);
 	hWnd = (HWND)cvGetWindowHandle("color");
@@ -242,7 +239,7 @@ BOOL CImgDLG::OnInitDialog()
 
 	GetDlgItem(IDC_PIC2)->GetWindowRect(&rect);           //IDC_WAVE_DRAW为Picture Control的ID  
 	ScreenToClient(&rect);
-	GetDlgItem(IDC_PIC2)->MoveWindow(360, 100, 320, 240, true);    //固定Picture Control控件的大小  
+	GetDlgItem(IDC_PIC2)->MoveWindow(320, 100, 240, 320, true);    //固定Picture Control控件的大小  
 
 
 	return TRUE;  // return TRUE unless you set the focus to a control
@@ -277,7 +274,7 @@ void on_mouse(int event, int x, int y, int flags, void *p)
 	}
 	static Point pre_pt = (-1, -1);//初始坐标  
 	static Point cur_pt = (-1, -1);//实时坐标  
-	char temp[16];
+	char temp[50];
 	Mat img, imgt;
 
 	if (event == CV_EVENT_LBUTTONDOWN)//左键按下，读取初始坐标，并在图像上该点处划圆  
@@ -289,15 +286,15 @@ void on_mouse(int event, int x, int y, int flags, void *p)
 		circle(img, pre_pt, 2, Scalar(255, 0, 0, 0), CV_FILLED, CV_AA, 0);//划圆  
 		imshow("view", img);
 	}
-	else if (event == CV_EVENT_MOUSEMOVE && !(flags & CV_EVENT_FLAG_LBUTTON))//左键没有按下的情况下鼠标移动的处理函数  
-	{
+	//else if (event == CV_EVENT_MOUSEMOVE && !(flags & CV_EVENT_FLAG_LBUTTON))//左键没有按下的情况下鼠标移动的处理函数  
+	//{
 
-		g_dst.copyTo(imgt);//将img复制到临时图像tmp上，用于显示实时坐标  
-		sprintf_s(temp, "(%d,%d)", x, y);
-		cur_pt = Point(x, y);
-		putText(imgt, temp, cur_pt, FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 0, 0, 255));//只是实时显示鼠标移动的坐标  
-		imshow("view",imgt);
-	}
+	//	g_dst.copyTo(imgt);//将img复制到临时图像tmp上，用于显示实时坐标  
+	//	sprintf_s(temp, "(%d,%d)", x, y);
+	//	cur_pt = Point(x, y);
+	//	putText(imgt, temp, cur_pt, FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 0, 0, 255));//只是实时显示鼠标移动的坐标  
+	//	imshow("view",imgt);
+	//}
 	else if (event == CV_EVENT_MOUSEMOVE && (flags & CV_EVENT_FLAG_LBUTTON))//左键按下时，鼠标移动，则在图像上划矩形  
 	{
 		g_dst.copyTo(imgt);
@@ -310,11 +307,38 @@ void on_mouse(int event, int x, int y, int flags, void *p)
 	else if (event == CV_EVENT_LBUTTONUP)//左键松开，将在图像上划矩形  
 	{
 		g_dst.copyTo(img);
-		sprintf_s(temp, "(%d,%d)", x, y);
+		
 		cur_pt = Point(x, y);
-		putText(img, temp, cur_pt, FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 0, 0, 255));
+		double max=0, min=9999, aver, dif,sum=0;
+
+		for (int i = pre_pt.y; i < cur_pt.y; i++)
+		{
+			for (int j = pre_pt.x; j < cur_pt.x; j++)
+			{
+				double value= g_dst.at<uchar>(i, j);
+				sum += value;
+				if (value>max)
+				{
+					max = value;
+				}
+				if (value < min)
+				{
+					min = value;
+				}
+			}
+
+		}
+
+		aver = sum / ((cur_pt.x - pre_pt.x)*(cur_pt.y - pre_pt.y));
+		max = 25 + max / 255.0 * 12.0;
+		min = 25 + min / 255.0 * 12.0;
+		aver = 25 + aver / 255.0 * 12.0;
+		
 	//	circle(img, pre_pt, 2, Scalar(255, 0, 0, 0), CV_FILLED, CV_AA, 0);
-		rectangle(img, pre_pt, cur_pt, Scalar(0, 255, 0, 0), 1, 8, 0);//根据初始点和结束点，将矩形画到img上  
+		sprintf_s(temp, "(%.2lf,%.2lf,%.2lf)", max, min,aver);
+		putText(img, temp, cur_pt, FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 0, 0, 255));
+		rectangle(img, pre_pt, cur_pt, Scalar(0, 255, 0, 0), 1, 8, 0);//根据初始点和结束点，将矩形画到img上
+
 		imshow("view", img);
 		//img.copyTo(imgt);
 		//截取矩形包围的图像，并保存到dst中  
@@ -360,6 +384,9 @@ BOOL CImgDLG::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 
 	float range = topvalue - bottomvalue;
 
+	Mat tmpdst;
+	tmpdst.create(img.size(), CV_8UC3);
+
 	if (range != 0)
 	{
 
@@ -376,14 +403,51 @@ BOOL CImgDLG::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 			int col = i%width;
 
 
-			dst.at<Vec3b>(row, col)[0] = 101.2 - 116.2*cos(tmp*0.08655) + 91.93*sin(tmp*0.08592);
-			dst.at<Vec3b>(row, col)[1] = 150.9 - 110.9*cos(tmp*0.08457) - 97.33*sin(tmp*0.08457);
-			dst.at<Vec3b>(row, col)[2] = 125.3 + 59.93*cos(tmp*0.04896) - 130.2*sin(tmp*0.04896);
+			tmpdst.at<Vec3b>(row, col)[0] = 101.2 - 116.2*cos(tmp*0.08655) + 91.93*sin(tmp*0.08592);
+			tmpdst.at<Vec3b>(row, col)[1] = 150.9 - 110.9*cos(tmp*0.08457) - 97.33*sin(tmp*0.08457);
+			tmpdst.at<Vec3b>(row, col)[2] = 125.3 + 59.93*cos(tmp*0.04896) - 130.2*sin(tmp*0.04896);
 
 		}
 	}
-	
+	dst.create(Size(tmpdst.rows, tmpdst.cols), CV_8UC3);
+	for (int i = 0; i < tmpdst.rows; i++)
+	{
+		for (int j = 0; j < tmpdst.cols; j++)
+		{
+			dst.at<Vec3b>(j, HEIGHT - 1 - i)[0] = tmpdst.at<Vec3b>(i, j)[0];
+			dst.at<Vec3b>(j, HEIGHT - 1 - i)[1] = tmpdst.at<Vec3b>(i, j)[1];
+			dst.at<Vec3b>(j, HEIGHT - 1 - i)[2] = tmpdst.at<Vec3b>(i, j)[2];
+		}
+
+	}
 	imshow("color", dst);
 
 	return CDialogEx::OnMouseWheel(nFlags, zDelta, pt);
+}
+void CImgDLG::rot90(Mat src, Mat& tmpimg)
+{
+	tmpimg.create(Size(g_dst.rows, g_dst.cols), CV_8UC1);
+	for (int i = 0; i < g_dst.rows; i++)
+	{
+		for (int j = 0; j < g_dst.cols; j++)
+		{
+			tmpimg.at<uchar>(j, HEIGHT - 1 - i) = g_dst.at<uchar>(i, j);
+		}
+
+	}
+}
+
+void CImgDLG::rot90RGB(Mat src, Mat& tmpimg)
+{
+	tmpimg.create(Size(src.rows, src.cols), CV_8UC3);
+	for (int i = 0; i < src.rows; i++)
+	{
+		for (int j = 0; j < src.cols; j++)
+		{
+			tmpimg.at<Vec3b>(j, HEIGHT - 1 - i)[0] = src.at<Vec3b>(i, j)[0];
+			tmpimg.at<Vec3b>(j, HEIGHT - 1 - i)[1] = src.at<Vec3b>(i, j)[1];
+			tmpimg.at<Vec3b>(j, HEIGHT - 1 - i)[2] = src.at<Vec3b>(i, j)[2];
+		}
+
+	}
 }

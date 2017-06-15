@@ -1,6 +1,14 @@
 #pragma once
 
+#include <opencv2/core/core.hpp>
+#include<opencv2/highgui/highgui.hpp>
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
+
+
+using namespace std;
+using namespace cv;
 // CImgDLG ¶Ô»°¿ò
 
 class CImgDLG : public CDialogEx
@@ -28,4 +36,7 @@ public:
 	afx_msg void OnBnClickedShow();
 	BOOL m_showTemper;
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+
+	void rot90(Mat src, Mat& tmpimg);
+	void rot90RGB(Mat src, Mat& tmpimg);
 };
